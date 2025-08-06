@@ -9,37 +9,40 @@ public class Item {
     private String name;
     private Integer quantity;
 
-    public Item() {
+    static Item brandNew(String name, Integer quantity) {
+        Item newItem = new Item();
+        newItem.setId(UUID.randomUUID());
+        newItem.setName(name);
+        newItem.setQuantity(quantity);
 
+        return newItem;
     }
 
-    public Item(UUID id, String name, Integer quantity) {
-        this.id = id;
-        this.name = name;
-        this.quantity = quantity;
+    protected Item() {
+        // Solicitado pelo Spring
     }
 
     public UUID getId() {
         return id;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public Integer getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(Integer quantity) {
+    private void setId(UUID id) {
+        this.id = id;
+    }
+
+    private void setName(String name) {
+        this.name = name;
+    }
+
+    protected void setQuantity(Integer quantity) {
         this.quantity = quantity;
     }
 

@@ -4,10 +4,7 @@ import com.dutra.courier.domain.enuns.DeliveryStatus;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public class Delivery {
 
@@ -32,136 +29,175 @@ public class Delivery {
 
     private final List<Item> items = new ArrayList<>();
 
-    public Delivery() {
+    public static Delivery draft() {
+        Delivery delivery = new Delivery();
 
+        delivery.setId(UUID.randomUUID());
+        delivery.setStatus(DeliveryStatus.DRAFT);
+        delivery.setTotalItems(0);
+        delivery.setTotalCost(BigDecimal.ZERO);
+        delivery.setCourierPayout(BigDecimal.ZERO);
+        delivery.setDistanceFee(BigDecimal.ZERO);
+
+        return delivery;
     }
 
-    public Delivery(UUID id, UUID courierId, OffsetDateTime placedAt,
-                    OffsetDateTime assignedAt, OffsetDateTime expectedDeliveryAt,
-                    OffsetDateTime fulfilledAt, BigDecimal distanceFee, BigDecimal courierPayout,
-                    BigDecimal totalCost, DeliveryStatus status, ContactPoint sender,
-                    ContactPoint recipient, Integer totalItems) {
-        this.id = id;
-        this.courierId = courierId;
-        this.placedAt = placedAt;
-        this.assignedAt = assignedAt;
-        this.expectedDeliveryAt = expectedDeliveryAt;
-        this.fulfilledAt = fulfilledAt;
-        this.distanceFee = distanceFee;
-        this.courierPayout = courierPayout;
-        this.totalCost = totalCost;
-        this.status = status;
-        this.sender = sender;
-        this.recipient = recipient;
-        this.totalItems = totalItems;
+    protected Delivery() {
+        // Exigido pelo Spring
+    }
+
+    public UUID addItem(String name, int quantity) {
+        Item item = Item.brandNew(name, quantity);
+        items.add(item);
+        calculateTotalItems();
+        return  item.getId();
+    }
+
+    public void removeitem(UUID itemId) {
+        items.removeIf(item -> item.getId().equals(itemId));
+        calculateTotalItems();
+    }
+
+    public void removeItems() {
+        items.clear();
+        calculateTotalItems();
+    }
+
+    public void changeItemQuantity(UUID itemId, int itemQuantity) {
+        Item item = getItems().stream().filter(i -> i.getId().equals(itemId))
+                .findFirst().orElseThrow();
+
+        item.setQuantity(itemQuantity);
+        calculateTotalItems();
+    }
+
+    private void calculateTotalItems() {
+        int total = items.stream().mapToInt(Item::getQuantity).sum();
+        setTotalItems(total);
+    }
+
+    public void place() {
+        this.setStatus(DeliveryStatus.WAITING_FOR_COURIER);
+        this.setPlacedAt(OffsetDateTime.now());
+    }
+
+    public void pickUp(UUID courierId) {
+        this.setCourierId(courierId);
+        this.setStatus(DeliveryStatus.IN_TRANSIT);
+        this.setAssignedAt(OffsetDateTime.now());
+    }
+
+    public void markedAsDelivered() {
+        this.setStatus(DeliveryStatus.DELIVERY);
+        this.setFulfilledAt(OffsetDateTime.now());
     }
 
     public UUID getId() {
         return id;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
     public UUID getCourierId() {
         return courierId;
-    }
-
-    public void setCourierId(UUID courierId) {
-        this.courierId = courierId;
     }
 
     public OffsetDateTime getPlacedAt() {
         return placedAt;
     }
 
-    public void setPlacedAt(OffsetDateTime placedAt) {
-        this.placedAt = placedAt;
-    }
-
     public OffsetDateTime getAssignedAt() {
         return assignedAt;
-    }
-
-    public void setAssignedAt(OffsetDateTime assignedAt) {
-        this.assignedAt = assignedAt;
     }
 
     public OffsetDateTime getExpectedDeliveryAt() {
         return expectedDeliveryAt;
     }
 
-    public void setExpectedDeliveryAt(OffsetDateTime expectedDeliveryAt) {
-        this.expectedDeliveryAt = expectedDeliveryAt;
-    }
-
     public OffsetDateTime getFulfilledAt() {
         return fulfilledAt;
-    }
-
-    public void setFulfilledAt(OffsetDateTime fulfilledAt) {
-        this.fulfilledAt = fulfilledAt;
     }
 
     public BigDecimal getDistanceFee() {
         return distanceFee;
     }
 
-    public void setDistanceFee(BigDecimal distanceFee) {
-        this.distanceFee = distanceFee;
-    }
-
     public BigDecimal getCourierPayout() {
         return courierPayout;
-    }
-
-    public void setCourierPayout(BigDecimal courierPayout) {
-        this.courierPayout = courierPayout;
     }
 
     public BigDecimal getTotalCost() {
         return totalCost;
     }
 
-    public void setTotalCost(BigDecimal totalCost) {
-        this.totalCost = totalCost;
-    }
-
     public DeliveryStatus getStatus() {
         return status;
-    }
-
-    public void setStatus(DeliveryStatus status) {
-        this.status = status;
     }
 
     public ContactPoint getSender() {
         return sender;
     }
 
-    public void setSender(ContactPoint sender) {
-        this.sender = sender;
-    }
-
     public ContactPoint getRecipient() {
         return recipient;
-    }
-
-    public void setRecipient(ContactPoint recipient) {
-        this.recipient = recipient;
     }
 
     public Integer getTotalItems() {
         return totalItems;
     }
 
-    public void setTotalItems(Integer totalItems) {
-        this.totalItems = totalItems;
+    public List<Item> getItems() {
+        return Collections.unmodifiableList(this.items);
     }
 
-    public List<Item> getItems() {
-        return items;
+    private void setRecipient(ContactPoint recipient) {
+        this.recipient = recipient;
+    }
+
+    private void setId(UUID id) {
+        this.id = id;
+    }
+
+    private void setCourierId(UUID courierId) {
+        this.courierId = courierId;
+    }
+
+    private void setPlacedAt(OffsetDateTime placedAt) {
+        this.placedAt = placedAt;
+    }
+
+    private void setAssignedAt(OffsetDateTime assignedAt) {
+        this.assignedAt = assignedAt;
+    }
+
+    private void setExpectedDeliveryAt(OffsetDateTime expectedDeliveryAt) {
+        this.expectedDeliveryAt = expectedDeliveryAt;
+    }
+
+    private void setFulfilledAt(OffsetDateTime fulfilledAt) {
+        this.fulfilledAt = fulfilledAt;
+    }
+
+    private void setDistanceFee(BigDecimal distanceFee) {
+        this.distanceFee = distanceFee;
+    }
+
+    private void setCourierPayout(BigDecimal courierPayout) {
+        this.courierPayout = courierPayout;
+    }
+
+    private void setTotalCost(BigDecimal totalCost) {
+        this.totalCost = totalCost;
+    }
+
+    private void setStatus(DeliveryStatus status) {
+        this.status = status;
+    }
+
+    private void setSender(ContactPoint sender) {
+        this.sender = sender;
+    }
+
+    private void setTotalItems(Integer totalItems) {
+        this.totalItems = totalItems;
     }
 
     @Override

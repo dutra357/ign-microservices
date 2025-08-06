@@ -1,6 +1,5 @@
 package com.dutra.courier.domain.model;
 
-
 import java.util.Objects;
 
 public class ContactPoint {
@@ -12,8 +11,8 @@ public class ContactPoint {
     private String name;
     private String phone;
 
-    public ContactPoint() {
-
+    protected ContactPoint() {
+        // Solicitado pelo Spring
     }
 
     public ContactPoint(String zipCode, String street, String number,
@@ -30,48 +29,24 @@ public class ContactPoint {
         return zipCode;
     }
 
-    public void setZipCode(String zipCode) {
-        this.zipCode = zipCode;
-    }
-
     public String getStreet() {
         return street;
-    }
-
-    public void setStreet(String street) {
-        this.street = street;
     }
 
     public String getNumber() {
         return number;
     }
 
-    public void setNumber(String number) {
-        this.number = number;
-    }
-
     public String getComplement() {
         return complement;
-    }
-
-    public void setComplement(String complement) {
-        this.complement = complement;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getPhone() {
         return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
     }
 
     @Override
