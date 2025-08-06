@@ -1,4 +1,4 @@
-package com.dutra.courier.domain.model;
+package com.dutra.delivery.domain.model;
 
 import java.util.Objects;
 import java.util.UUID;

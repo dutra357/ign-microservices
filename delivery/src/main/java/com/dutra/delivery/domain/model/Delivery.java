@@ -1,8 +1,10 @@
-package com.dutra.courier.domain.model;
+package com.dutra.delivery.domain.model;
 
-import com.dutra.courier.domain.enuns.DeliveryStatus;
+import com.dutra.delivery.domain.enuns.DeliveryStatus;
+import com.dutra.delivery.domain.exception.DomainException;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.*;
 
@@ -63,6 +65,24 @@ public class Delivery {
         calculateTotalItems();
     }
 
+    public void editPreparationDetails(PreparationDetails details) {
+        verifyIfCanBeEdited();
+        
+        setSender(details.getSender());
+        setRecipient(details.getRecipient());
+        setDistanceFee(details.getDistanceFee());
+        setCourierPayout(details.getCourierPayout());
+
+        setExpectedDeliveryAt(OffsetDateTime.now().plus(details.getExpectedDeliveryTime()));
+        setTotalCost(this.getDistanceFee().add(this.getCourierPayout()));
+    }
+
+    private void verifyIfCanBeEdited() {
+        if (!getStatus().equals(DeliveryStatus.DRAFT)) {
+            throw new DomainException("Status is DRAFT.");
+        }
+    }
+
     public void changeItemQuantity(UUID itemId, int itemQuantity) {
         Item item = getItems().stream().filter(i -> i.getId().equals(itemId))
                 .findFirst().orElseThrow();
@@ -77,19 +97,45 @@ public class Delivery {
     }
 
     public void place() {
-        this.setStatus(DeliveryStatus.WAITING_FOR_COURIER);
+        verifyIfCanBePlaced();
+        this.changeStatusTo(DeliveryStatus.WAITING_FOR_COURIER);
         this.setPlacedAt(OffsetDateTime.now());
+    }
+
+    private void verifyIfCanBePlaced() {
+        if (!isFilled()) {
+            throw new DomainException("Not can be placed.");
+        }
+
+        if (!getStatus().equals(DeliveryStatus.DRAFT)) {
+            throw new DomainException("Status error.");
+        }
+    }
+
+    private boolean isFilled() {
+        return this.getSender() != null
+                && this.getRecipient() != null
+                && this.getTotalCost() != null;
     }
 
     public void pickUp(UUID courierId) {
         this.setCourierId(courierId);
-        this.setStatus(DeliveryStatus.IN_TRANSIT);
+        this.changeStatusTo(DeliveryStatus.IN_TRANSIT);
         this.setAssignedAt(OffsetDateTime.now());
     }
 
     public void markedAsDelivered() {
-        this.setStatus(DeliveryStatus.DELIVERY);
+        this.changeStatusTo(DeliveryStatus.DELIVERY);
         this.setFulfilledAt(OffsetDateTime.now());
+    }
+
+    private void changeStatusTo(DeliveryStatus newStatus) {
+
+        if (newStatus != null && this.getStatus().canNotChangeTo(newStatus)) {
+            throw new DomainException("Invalid status transition.");
+        }
+
+        this.setStatus(newStatus);
     }
 
     public UUID getId() {
@@ -228,5 +274,74 @@ public class Delivery {
                 ", totalItems=" + totalItems +
                 ", items=" + items +
                 '}';
+    }
+
+    public static class PreparationDetails {
+        private ContactPoint sender;
+        private ContactPoint recipient;
+        private BigDecimal distanceFee;
+        private BigDecimal courierPayout;
+        private Duration expectedDeliveryTime;
+
+        public PreparationDetails(ContactPoint sender,
+                                  ContactPoint recipient, BigDecimal distanceFee,
+                                  BigDecimal courierPayout, Duration expectedDeliveryTime) {
+            this.sender = sender;
+            this.recipient = recipient;
+            this.distanceFee = distanceFee;
+            this.courierPayout = courierPayout;
+            this.expectedDeliveryTime = expectedDeliveryTime;
+        }
+
+        public ContactPoint getSender() {
+            return sender;
+        }
+
+        public void setSender(ContactPoint sender) {
+            this.sender = sender;
+        }
+
+        public ContactPoint getRecipient() {
+            return recipient;
+        }
+
+        public void setRecipient(ContactPoint recipient) {
+            this.recipient = recipient;
+        }
+
+        public BigDecimal getDistanceFee() {
+            return distanceFee;
+        }
+
+        public void setDistanceFee(BigDecimal distanceFee) {
+            this.distanceFee = distanceFee;
+        }
+
+        public BigDecimal getCourierPayout() {
+            return courierPayout;
+        }
+
+        public void setCourierPayout(BigDecimal courierPayout) {
+            this.courierPayout = courierPayout;
+        }
+
+        public Duration getExpectedDeliveryTime() {
+            return expectedDeliveryTime;
+        }
+
+        public void setExpectedDeliveryTime(Duration expectedDeliveryTime) {
+            this.expectedDeliveryTime = expectedDeliveryTime;
+        }
+
+        @Override
+        public String toString() {
+            return "PreparationDetails{" +
+                    "sender=" + sender +
+                    ", recipient=" + recipient +
+                    ", distanceFee=" + distanceFee +
+                    ", courierPayout=" + courierPayout +
+                    ", expectedDeliveryTime=" + expectedDeliveryTime +
+                    '}';
+        }
     }
 }
