@@ -1,24 +1,42 @@
 package com.dutra.courier.domain.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+
 import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.UUID;
 
+@Entity
 public class AssignedDelivery {
 
+    @Id
     private UUID id;
     private OffsetDateTime assignedAt;
+
+    @ManyToOne(optional = false)
+    private Courier courier;
 
     protected AssignedDelivery() {
         // Para o Spring
     }
 
-    static AssignedDelivery pending(UUID deliveryId) {
+    static AssignedDelivery pending(UUID deliveryId, Courier courier) {
         AssignedDelivery assignedDelivery = new AssignedDelivery();
         assignedDelivery.setId(deliveryId);
         assignedDelivery.setAssignedAt(OffsetDateTime.now());
+        assignedDelivery.setCourier(courier);
 
         return assignedDelivery;
+    }
+
+    private Courier getCourier() {
+        return courier;
+    }
+
+    private void setCourier(Courier courier) {
+        this.courier = courier;
     }
 
     private void setId(UUID id) {

@@ -1,7 +1,10 @@
 package com.dutra.delivery.domain.model;
 
+import jakarta.persistence.Embeddable;
+
 import java.util.Objects;
 
+@Embeddable
 public class ContactPoint {
 
     private String zipCode;

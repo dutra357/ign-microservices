@@ -1,10 +1,17 @@
 package com.dutra.courier.domain.model;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+
 import java.time.OffsetDateTime;
 import java.util.*;
 
+@Entity
 public class Courier {
 
+    @Id
     private UUID id;
     private String name;
     private String phone;
@@ -13,6 +20,7 @@ public class Courier {
     private Integer pendingDeliveriesQuantity;
     private OffsetDateTime lastFulfilledDeliveryAt;
 
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "courier")
     private final List<AssignedDelivery> pendingDeliveries = new ArrayList<>();
 
     public static Courier brandNew(String name, String phone) {
@@ -33,7 +41,7 @@ public class Courier {
     }
 
     public void assign(UUID deliveryId) {
-        this.pendingDeliveries.add(AssignedDelivery.pending(deliveryId));
+        this.pendingDeliveries.add(AssignedDelivery.pending(deliveryId, this));
 
         this.pendingDeliveriesQuantity++;
     }

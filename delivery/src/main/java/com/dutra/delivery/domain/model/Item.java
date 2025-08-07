@@ -1,25 +1,43 @@
 package com.dutra.delivery.domain.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+
 import java.util.Objects;
 import java.util.UUID;
 
+@Entity
 public class Item {
 
+    @Id
     private UUID id;
     private String name;
     private Integer quantity;
 
-    static Item brandNew(String name, Integer quantity) {
+    @ManyToOne(optional = false)
+    private Delivery delivery;
+
+    static Item brandNew(String name, Integer quantity, Delivery delivery) {
         Item newItem = new Item();
         newItem.setId(UUID.randomUUID());
         newItem.setName(name);
         newItem.setQuantity(quantity);
+        newItem.setDelivery(delivery);
 
         return newItem;
     }
 
     protected Item() {
         // Solicitado pelo Spring
+    }
+
+    private void setDelivery(Delivery delivery) {
+        this.delivery = delivery;
+    }
+
+    private Delivery getDelivery() {
+        return delivery;
     }
 
     public UUID getId() {
