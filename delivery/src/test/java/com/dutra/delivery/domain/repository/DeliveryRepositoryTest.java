@@ -29,7 +29,7 @@ class DeliveryRepositoryTest {
         delivery.addItem("Computador", 2);
         delivery.addItem("Notebook", 2);
 
-        repository.saveAllAndFlush(delivery);
+        repository.save(delivery);
 
         Delivery persistDelivery = repository.findById(delivery.getId()).orElseThrow();
         Assertions.assertEquals(2, persistDelivery.getItems().size());
