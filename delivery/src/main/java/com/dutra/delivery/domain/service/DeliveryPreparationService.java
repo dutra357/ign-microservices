@@ -7,10 +7,13 @@ import com.dutra.delivery.domain.exception.DomainException;
 import com.dutra.delivery.domain.model.ContactPoint;
 import com.dutra.delivery.domain.model.Delivery;
 import com.dutra.delivery.domain.repository.DeliveryRepository;
+import com.dutra.delivery.domain.service.interfaces.CourierPayoutCalcService;
+import com.dutra.delivery.domain.service.interfaces.DeliveryTimeEstimationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -18,9 +21,15 @@ import java.util.UUID;
 public class DeliveryPreparationService {
 
     private final DeliveryRepository deliveryRepository;
+    private final DeliveryTimeEstimationService deliveryTimeEstimationService;
+    private final CourierPayoutCalcService courierPayoutCalcService;
 
-    public DeliveryPreparationService(DeliveryRepository deliveryRepository) {
+    public DeliveryPreparationService(DeliveryRepository deliveryRepository,
+                                      DeliveryTimeEstimationService deliveryTimeEstimationService,
+                                      CourierPayoutCalcService courierPayoutCalcService) {
         this.deliveryRepository = deliveryRepository;
+        this.deliveryTimeEstimationService = deliveryTimeEstimationService;
+        this.courierPayoutCalcService = courierPayoutCalcService;
     }
 
     @Transactional
@@ -55,16 +64,23 @@ public class DeliveryPreparationService {
                 recipientInput.getNumber(), recipientInput.getComplement(),
                 recipientInput.getName(), recipientInput.getPhone());
 
+        DeliveryEstimate estimate = deliveryTimeEstimationService.estimate(sender, recipient);
+        BigDecimal payout = courierPayoutCalcService.calculatePayout(estimate.getDistanceInKm());
 
-        Duration expectedTime = Duration.ofHours(3);
-        BigDecimal payout = new BigDecimal("10");
+        BigDecimal distanceFee = calculateFee(estimate.getDistanceInKm());
 
-        var preparationDetails = new Delivery.PreparationDetails(sender, recipient, new BigDecimal("10"), payout, expectedTime);
+        var preparationDetails = new Delivery.PreparationDetails(sender, recipient, distanceFee, payout, estimate.getEstimatedTime());
 
         delivery.editPreparationDetails(preparationDetails);
 
         for (ItemInput item : deliveryInput.getItems()) {
             delivery.addItem(item.getName(), item.getQuantity());
         }
+    }
+
+    private BigDecimal calculateFee(Double distanceInKm) {
+        return new BigDecimal("3")
+                .multiply(BigDecimal.valueOf(distanceInKm))
+                .setScale(2, RoundingMode.HALF_EVEN);
     }
 }
